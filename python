@@ -1,0 +1,92 @@
+from netmiko import ConnectHandler
+
+def configure_cisco(device, commands, name="Cisco Device"):
+    """Konfigurasi perangkat Cisco"""
+    try:
+        print(f"Menghubungkan ke {name}: {device['host']}")
+        connection = ConnectHandler(**device)
+        output = connection.send_config_set(commands)
+        print(output)
+        connection.disconnect()
+        print(f"Konfigurasi selesai untuk perangkat {device['host']}\n")
+    except Exception as e:
+        print(f"Terjadi kesalahan pada perangkat {device['host']}: {e}")
+
+def configure_mikrotik(device, commands, name="MikroTik Device"):
+    """Konfigurasi perangkat MikroTik"""
+    try:
+        print(f"Menghubungkan ke {name}: {device['host']}")
+        connection = ConnectHandler(**device)
+        output = connection.send_config_set(commands, enter_config_mode=False)
+        print(output)
+        connection.disconnect()
+        print(f"Konfigurasi selesai untuk perangkat {device['host']}\n")
+    except Exception as e:
+        print(f"Terjadi kesalahan pada perangkat {device['host']}: {e}")
+
+def configure_ubuntu(commands):
+    """Konfigurasi Ubuntu Server"""
+    try:
+        print("Mengonfigurasi Ubuntu Server")
+        for command in commands:
+            print(f"Eksekusi: {command}")
+            os.system(command)
+        print("Konfigurasi Ubuntu Server selesai\n")
+    except Exception as e:
+        print(f"Terjadi kesalahan pada Ubuntu Server: {e}")
+
+# Nama Pemilik: Rhafly
+if __name__ == "__main__":
+    # Data perangkat Cisco
+    cisco_device = {
+        'device_type': 'cisco_ios',
+        'host': '192.168.1.2',
+        'username': 'admin',
+        'password': 'admin',
+    }
+
+    # Data perangkat MikroTik
+    mikrotik_device = {
+        'device_type': 'mikrotik_routeros',
+        'host': '192.168.1.3',
+        'username': 'admin',
+        'password': 'admin',
+    }
+
+    # Perintah konfigurasi untuk Ubuntu Server
+    ubuntu_commands = [
+        "sudo ip link add link eth1 name eth1.10 type vlan id 10",
+        "sudo ip addr add 192.168.10.1/24 dev eth1.10",
+        "sudo ip link set eth1.10 up",
+        "sudo apt update && sudo apt install -y isc-dhcp-server",
+        "echo 'subnet 192.168.10.0 netmask 255.255.255.0 { range 192.168.10.100 192.168.10.200; option routers 192.168.10.1; }' | sudo tee -a /etc/dhcp/dhcpd.conf",
+        "sudo systemctl restart isc-dhcp-server",
+        "sudo ip route add default via 192.168.1.1"
+    ]
+
+    # Perintah konfigurasi untuk Cisco
+    cisco_commands = [
+        'vlan 10',
+        'name VLAN10',
+        'interface GigabitEthernet0/1',
+        'switchport mode trunk',
+        'switchport trunk allowed vlan 10',
+        'exit'
+    ]
+
+    # Perintah konfigurasi untuk MikroTik
+    mikrotik_commands = [
+        '/ip address add address=192.168.10.254/24 interface=ether1',
+        '/ip address add address=192.168.200.1/24 interface=ether2',
+        '/ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade',
+        '/ip route add dst-address=0.0.0.0/0 gateway=192.168.10.1'
+    ]
+
+    # Jalankan konfigurasi untuk Ubuntu Server
+    configure_ubuntu(ubuntu_commands)
+
+    # Jalankan konfigurasi untuk Cisco
+    configure_cisco(cisco_device, cisco_commands)
+
+    # Jalankan konfigurasi untuk MikroTik
+    configure_mikrotik(mikrotik_device, mikrotik_commands)
